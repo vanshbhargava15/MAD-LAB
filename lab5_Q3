@@ -1,0 +1,220 @@
+package com.example.movieticketbooking;
+
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.*;
+import androidx.appcompat.app.AppCompatActivity;
+import java.util.Calendar;
+
+public class MainActivity extends AppCompatActivity {
+    private Spinner movieSpinner, theatreSpinner;
+    private DatePickerDialog datePickerDialog;
+    private Button dateButton, bookNowButton, resetButton;
+    private TimePickerDialog timePickerDialog;
+    private Button timeButton;
+    private ToggleButton ticketTypeToggle;
+    private String selectedMovie, selectedTheatre, selectedTime;
+    private boolean isPremium;
+    private TextView errorText;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        movieSpinner = findViewById(R.id.movieSpinner);
+        theatreSpinner = findViewById(R.id.theatreSpinner);
+        dateButton = findViewById(R.id.dateButton);
+        timeButton = findViewById(R.id.timeButton);
+        bookNowButton = findViewById(R.id.bookNowButton);
+        resetButton = findViewById(R.id.resetButton);
+        ticketTypeToggle = findViewById(R.id.ticketTypeToggle);
+        errorText = findViewById(R.id.errorText);
+
+        setupDatePicker();
+        setupTimePicker();
+
+        ticketTypeToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            isPremium = isChecked;
+            validatePremiumBooking();
+        });
+
+        bookNowButton.setOnClickListener(v -> validateAndBook());
+        resetButton.setOnClickListener(v -> resetFields());
+    }
+
+    private void setupDatePicker() {
+        Calendar calendar = Calendar.getInstance();
+        datePickerDialog = new DatePickerDialog(this, (view, year, month, dayOfMonth) ->
+                dateButton.setText(dayOfMonth + "/" + (month + 1) + "/" + year),
+                calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+        dateButton.setOnClickListener(v -> datePickerDialog.show());
+    }
+
+    private void setupTimePicker() {
+        timeButton.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+            timePickerDialog = new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+                selectedTime = hourOfDay + ":" + (minute < 10 ? "0" + minute : minute);
+                timeButton.setText(selectedTime);
+                validatePremiumBooking();
+            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true);
+            timePickerDialog.show();
+        });
+    }
+
+    private void validatePremiumBooking() {
+        if (isPremium) {
+            Calendar now = Calendar.getInstance();
+            int currentHour = now.get(Calendar.HOUR_OF_DAY);
+            bookNowButton.setEnabled(currentHour >= 12);
+            errorText.setText(currentHour < 12 ? "Premium tickets can only be booked after 12:00 PM" : "");
+        } else {
+            bookNowButton.setEnabled(true);
+            errorText.setText("");
+        }
+    }
+
+    private void validateAndBook() {
+        selectedMovie = movieSpinner.getSelectedItem().toString();
+        selectedTheatre = theatreSpinner.getSelectedItem().toString();
+        if (selectedMovie.isEmpty() || selectedTheatre.isEmpty() || selectedTime == null) {
+            errorText.setText("All fields are required.");
+            return;
+        }
+        Intent intent = new Intent(MainActivity.this, BookingDetailsActivity.class);
+        intent.putExtra("movie", selectedMovie);
+        intent.putExtra("theatre", selectedTheatre);
+        intent.putExtra("date", dateButton.getText().toString());
+        intent.putExtra("time", selectedTime);
+        intent.putExtra("isPremium", isPremium);
+        startActivity(intent);
+    }
+
+    private void resetFields() {
+        movieSpinner.setSelection(0);
+        theatreSpinner.setSelection(0);
+        dateButton.setText("Select Date");
+        timeButton.setText("Select Time");
+        ticketTypeToggle.setChecked(false);
+        errorText.setText("");
+        bookNowButton.setEnabled(true);
+    }
+}
+
+// BookingDetailsActivity.java
+package com.example.movieticketbooking;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class BookingDetailsActivity extends AppCompatActivity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_booking_details);
+
+        TextView detailsTextView = findViewById(R.id.detailsTextView);
+        Button backButton = findViewById(R.id.backButton);
+
+        Intent intent = getIntent();
+        String movie = intent.getStringExtra("movie");
+        String theatre = intent.getStringExtra("theatre");
+        String date = intent.getStringExtra("date");
+        String time = intent.getStringExtra("time");
+        boolean isPremium = intent.getBooleanExtra("isPremium", false);
+
+        String details = "Movie: " + movie + "\n" +
+                         "Theatre: " + theatre + "\n" +
+                         "Date: " + date + "\n" +
+                         "Time: " + time + "\n" +
+                         "Ticket Type: " + (isPremium ? "Premium" : "Standard");
+
+        detailsTextView.setText(details);
+
+        backButton.setOnClickListener(v -> finish());
+    }
+}
+
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <Spinner
+        android:id="@+id/movieSpinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Spinner
+        android:id="@+id/theatreSpinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/dateButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select Date" />
+
+    <Button
+        android:id="@+id/timeButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select Time" />
+
+    <ToggleButton
+        android:id="@+id/ticketTypeToggle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textOn="Premium"
+        android:textOff="Standard" />
+
+    <TextView
+        android:id="@+id/errorText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/holo_red_light"
+        android:text="" />
+
+    <Button
+        android:id="@+id/bookNowButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Book Now" />
+
+    <Button
+        android:id="@+id/resetButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Reset" />
+
+</LinearLayout>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/detailsTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/backButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Back" />
+
+</LinearLayout>
