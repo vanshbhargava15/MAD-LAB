@@ -1,0 +1,77 @@
+package com.example.networktoggle;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.Toast;
+import android.widget.ToggleButton;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+    private ToggleButton modeToggle;
+    private ImageView modeImage;
+    private Button changeModeButton;
+    private boolean isWifiMode = true;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        modeToggle = findViewById(R.id.modeToggle);
+        modeImage = findViewById(R.id.modeImage);
+        changeModeButton = findViewById(R.id.changeModeButton);
+
+        modeToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            isWifiMode = isChecked;
+            updateMode();
+        });
+
+        changeModeButton.setOnClickListener(v -> {
+            isWifiMode = !isWifiMode;
+            modeToggle.setChecked(isWifiMode);
+            updateMode();
+        });
+    }
+
+    private void updateMode() {
+        if (isWifiMode) {
+            modeImage.setImageResource(R.drawable.wifi_icon);
+            Toast.makeText(this, "Current Mode: Wi-Fi", Toast.LENGTH_SHORT).show();
+        } else {
+            modeImage.setImageResource(R.drawable.mobile_data_icon);
+            Toast.makeText(this, "Current Mode: Mobile Data", Toast.LENGTH_SHORT).show();
+        }
+    }
+}
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp">
+
+    <ToggleButton
+        android:id="@+id/modeToggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textOn="Wi-Fi"
+        android:textOff="Mobile Data" />
+
+    <ImageView
+        android:id="@+id/modeImage"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_marginTop="20dp"
+        android:src="@drawable/wifi_icon" />
+
+    <Button
+        android:id="@+id/changeModeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Change Mode"
+        android:layout_marginTop="20dp" />
+
+</LinearLayout>
